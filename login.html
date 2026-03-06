@@ -174,7 +174,7 @@
       if (user.length >= 3 && pass.length >= 3) {
         sessionStorage.setItem('bfiq_auth', 'true');
         sessionStorage.setItem('bfiq_user', user);
-        window.location.href = 'index.html';
+        window.location.href = 'data-workspace.html';
       } else {
         errBox.style.display = 'block';
         errBox.textContent = 'Invalid credentials. Please enter a valid User ID and Password.';
@@ -185,7 +185,7 @@
       // Mock Google OAuth flow
       sessionStorage.setItem('bfiq_auth', 'true');
       sessionStorage.setItem('bfiq_user', 'System Administrator');
-      window.location.href = 'index.html';
+      window.location.href = 'data-workspace.html';
     });
   </script>
 
