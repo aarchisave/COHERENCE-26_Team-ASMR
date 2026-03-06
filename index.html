@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BudgetFlow IQ — India Union Budget Intelligence Platform</title>
+  <meta name="description" content="India Union Budget Intelligence &amp; Leakage Detection Platform — track public fund flows across Union Budget ministries, detect anomalies, forecast fund lapse risks, and optimize budget reallocation across India's regions." />
+  <link rel="stylesheet" href="css/style.css?v=8" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    // Security Guard: Check if user is authenticated
+    if (sessionStorage.getItem('bfiq_auth') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SIDEBAR NAVIGATION
+  ═══════════════════════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <div class="brand-wordmark">
+          <h1>BudgetFlow IQ</h1>
+          <p>Public Finance Intelligence</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <div class="nav-section-label">Dashboards</div>
+
+      <a class="nav-item active" data-section="overview" id="nav-overview">
+        <span class="nav-icon">◈</span>
+        Executive Overview
+      </a>
+
+      <a class="nav-item" data-section="flowtracker" id="nav-flowtracker">
+        <span class="nav-icon">⇄</span>
+        Budget Flow Tracker
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Intelligence</div>
+
+      <a class="nav-item" data-section="anomaly" id="nav-anomaly">
+        <span class="nav-icon">◎</span>
+        Anomaly Detection
+        <span class="nav-badge" id="anomaly-nav-count">10</span>
+      </a>
+
+      <a class="nav-item" data-section="prediction" id="nav-prediction">
+        <span class="nav-icon">↗</span>
+        Risk Forecasting
+      </a>
+
+      <a class="nav-item" data-section="optimizer" id="nav-optimizer">
+        <span class="nav-icon">⊕</span>
+        Reallocation Optimizer
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px;">Governance</div>
+
+      <a class="nav-item" data-section="reports" id="nav-reports">
+        <span class="nav-icon">≡</span>
+        Reports &amp; Insights
+      </a>
+
+      <a class="nav-item" data-section="ingestion" id="nav-ingestion">
+        <span class="nav-icon">⇪</span>
+        Data Ingestion
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="data-coverage">
+        <div class="data-coverage-label">Data Coverage</div>
+        <div class="data-coverage-item">FY 2022 – 2024</div>
+        <div class="data-coverage-item">5 Ministries · 10 Regions</div>
+        <div class="data-coverage-item" style="margin-top:6px;">
+          <span class="status-indicator"></span>
+          <span style="color:#4ade80;font-weight:600;font-size:0.67rem;">System Online</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="main-content" id="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Executive Dashboard</div>
+        <div class="topbar-subtitle">India Union Budget Intelligence Platform</div>
+      </div>
+      <div class="topbar-controls">
+        <label for="filter-year" style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">Fiscal Year</label>
+        <select class="filter-select" id="filter-year">
+          <option value="2022">FY 2022</option>
+          <option value="2023">FY 2023</option>
+          <option value="2024" selected>FY 2024</option>
+        </select>
+
+        <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+          <span class="theme-toggle-icon" id="theme-icon">☾</span>
+          <span id="theme-label">Dark</span>
+        </button>
+
+        <div class="live-indicator">
+          <div class="status-dot"></div>
+          <span class="topbar-time" id="topbar-time">00:00:00</span>
+        </div>
+
+        <button id="btn-logout" style="background:transparent; border:1px solid var(--color-danger); color:var(--color-danger); padding:5px 12px; border-radius:var(--r-md); font-size:0.72rem; font-weight:600; cursor:pointer; margin-left:8px; font-family:'Inter', sans-serif; transition:all 0.15s ease;" onmouseover="this.style.background='var(--color-danger-bg)'" onmouseout="this.style.background='transparent'">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 1 — EXECUTIVE OVERVIEW
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section active" id="sec-overview">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Executive Overview</h2>
+          <p>High-level summary of public fund allocation, utilization, and anomalies across all departments and districts.</p>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Total Budget Allocated</span>
+            <div class="kpi-icon blue">₹</div>
+          </div>
+          <div class="kpi-value" id="kpi-total-budget">—</div>
+          <div class="kpi-sub">Annual budget across all departments</div>
+          <div class="kpi-trend up">↑ 8% YoY growth</div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Total Funds Spent</span>
+            <div class="kpi-icon green">↓</div>
+          </div>
+          <div class="kpi-value" id="kpi-total-spent">—</div>
+          <div class="kpi-sub">Actual expenditure reported</div>
+          <div class="kpi-trend up">↑ Improving</div>
+        </div>
+
+        <div class="kpi-card violet">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Utilization Rate</span>
+            <div class="kpi-icon violet">%</div>
+          </div>
+          <div class="kpi-value" id="kpi-util-rate">—</div>
+          <div class="kpi-sub">Spend as % of allocation</div>
+          <div class="kpi-trend warn">Target: &gt;85%</div>
+        </div>
+
+        <div class="kpi-card warning">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Anomalies Detected</span>
+            <div class="kpi-icon warning">!</div>
+          </div>
+          <div class="kpi-value" id="kpi-anomalies">—</div>
+          <div class="kpi-sub">Statistical outliers flagged</div>
+          <div class="kpi-trend down" id="kpi-critical-label"><span id="kpi-critical">—</span> Critical</div>
+        </div>
+
+        <div class="kpi-card danger">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Unspent Balance</span>
+            <div class="kpi-icon danger">▲</div>
+          </div>
+          <div class="kpi-value" id="kpi-lapse-risk">—</div>
+          <div class="kpi-sub">Funds at risk of lapsing</div>
+          <div class="kpi-trend down">Needs intervention</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid-2-1">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Allocation vs Expenditure by Department</span>
+            <span class="card-subtitle">FY Selected</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:280px;">
+              <canvas id="chart-overview-bar"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Spending Distribution</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:280px;">
+              <canvas id="chart-overview-donut"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid-2-1">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Monthly Fund Flow Trend</span>
+            <span class="card-subtitle">Allocated vs Released vs Spent</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:260px;">
+              <canvas id="chart-overview-trend"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">District Utilization</span>
+          </div>
+          <div class="card-body" style="max-height:310px;overflow-y:auto;">
+            <div id="district-heatmap"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Anomaly Feed -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recent Anomaly Alerts</span>
+          <span class="card-subtitle">Top flagged entries by severity — see Anomaly Detection for full analysis</span>
+        </div>
+        <div class="card-body">
+          <div class="alert-feed" id="anomaly-feed"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 2 — BUDGET FLOW TRACKER
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-flowtracker">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Budget Flow Tracker</h2>
+          <p>Drill down into fund allocation, release, and expenditure across all administrative levels.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Utilization by District</span>
+            <span class="card-subtitle">Sorted highest → lowest</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:320px;">
+              <canvas id="chart-flow-dist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Spent vs Unspent by Department</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:320px;">
+              <canvas id="chart-flow-stack"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Department × District Drilldown</span>
+          <span class="card-subtitle">20 lowest utilization entries — sorted ascending</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>District</th>
+                  <th>Allocated (Cr)</th>
+                  <th>Spent (Cr)</th>
+                  <th>Balance (Cr)</th>
+                  <th>Utilization</th>
+                </tr>
+              </thead>
+              <tbody id="flow-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 3 — ANOMALY DETECTION
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-anomaly">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Anomaly Detection</h2>
+          <p>Statistical outlier detection using Z-score analysis. Flags expenditure spikes, underutilization patterns, disbursement delays, and leakage risks.</p>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card warning">
+          <div class="kpi-card-top"><span class="kpi-label">Total Anomalies</span><div class="kpi-icon warning">!</div></div>
+          <div class="kpi-value" id="anom-total">—</div>
+          <div class="kpi-sub">Across all departments &amp; districts</div>
+        </div>
+        <div class="kpi-card danger">
+          <div class="kpi-card-top"><span class="kpi-label">Critical Severity</span><div class="kpi-icon danger">▲</div></div>
+          <div class="kpi-value" id="anom-critical">—</div>
+          <div class="kpi-sub">Require immediate action</div>
+        </div>
+        <div class="kpi-card violet">
+          <div class="kpi-card-top"><span class="kpi-label">High Severity</span><div class="kpi-icon violet">◈</div></div>
+          <div class="kpi-value" id="anom-high">—</div>
+          <div class="kpi-sub">Need prompt review</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-card-top"><span class="kpi-label">Financial Impact</span><div class="kpi-icon blue">₹</div></div>
+          <div class="kpi-value" id="anom-impact">—</div>
+          <div class="kpi-sub">Cumulative deviation from expected spend</div>
+        </div>
+      </div>
+
+      <div class="grid-2-1">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Expected vs Actual Spending</span>
+            <span class="card-subtitle">Triangles = detected anomalies</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:300px;">
+              <canvas id="chart-anomaly-scatter"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Anomaly Type Distribution</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:300px;">
+              <canvas id="chart-anomaly-types"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Anomaly Log</span>
+          <span class="card-subtitle">Sorted by severity &amp; financial impact · Top 25 shown</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>District</th>
+                  <th>Period</th>
+                  <th>Type</th>
+                  <th>Actual Util</th>
+                  <th>Expected Util</th>
+                  <th>Deviation</th>
+                  <th>Financial Impact</th>
+                  <th>Severity</th>
+                </tr>
+              </thead>
+              <tbody id="anomaly-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 4 — PREDICTIVE RISK MODELING
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-prediction">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Predictive Risk Modeling</h2>
+          <p>Linear regression-based forecasting identifies departments at risk of fund lapsing before year-end, with 3-month utilization projections.</p>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card danger">
+          <div class="kpi-card-top"><span class="kpi-label">Departments at Risk</span><div class="kpi-icon danger">▲</div></div>
+          <div class="kpi-value" id="pred-at-risk">—</div>
+          <div class="kpi-sub">Critical or High lapse risk this FY</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-card-top"><span class="kpi-label">Total Lapse Risk</span><div class="kpi-icon warning">₹</div></div>
+          <div class="kpi-value" id="pred-lapse-amt">—</div>
+          <div class="kpi-sub">Estimated funds at risk of lapse</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-card-top"><span class="kpi-label">Depts Modeled</span><div class="kpi-icon green">≡</div></div>
+          <div class="kpi-value" id="pred-total-depts">—</div>
+          <div class="kpi-sub">Forecast generated for each</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Utilization Rate Forecasts — All Departments</span>
+          <span class="card-subtitle">Solid lines = historical · Dashed = projected 3-month outlook</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-container" style="height:320px;">
+            <canvas id="chart-pred-forecast"></canvas>
+          </div>
+          <div style="margin-top:14px;padding:10px 14px;background:var(--color-danger-bg);border:1px solid var(--color-danger-border);border-radius:var(--r-md);font-size:0.75rem;color:var(--text-secondary);">
+            <strong style="color:var(--color-danger);">Fund Lapse Risk Zone:</strong> Utilization below <strong>70%</strong> at year-end = high lapse risk. Below <strong>55%</strong> = critical — immediate intervention required.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;" id="pred-risk-cards"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Projected Utilization Heatmap — Dept × District</span>
+          <span class="card-subtitle">Based on 3-month forward projection</span>
+        </div>
+        <div class="card-body" style="overflow-x:auto;">
+          <div id="pred-heatmap" style="min-width:700px;"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 5 — REALLOCATION OPTIMIZER
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-optimizer">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Reallocation Optimizer</h2>
+          <p>Simulates optimal fund transfer strategies from surplus districts to deficit ones, maximizing overall utilization efficiency.</p>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-card-top"><span class="kpi-label">Transfer Recommendations</span><div class="kpi-icon blue">⇄</div></div>
+          <div class="kpi-value" id="opt-transfers">—</div>
+          <div class="kpi-sub">Optimized fund movements</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-card-top"><span class="kpi-label">Total Amount to Move</span><div class="kpi-icon green">₹</div></div>
+          <div class="kpi-value" id="opt-moved">—</div>
+          <div class="kpi-sub">Reallocation pool size</div>
+        </div>
+        <div class="kpi-card violet">
+          <div class="kpi-card-top"><span class="kpi-label">Efficiency Gain</span><div class="kpi-icon violet">↗</div></div>
+          <div class="kpi-value" id="opt-gain">—</div>
+          <div class="kpi-sub">After-reallocation avg utilization gain</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-card-top"><span class="kpi-label">Lapse Prevention</span><div class="kpi-icon warning">▲</div></div>
+          <div class="kpi-value" id="opt-saved">—</div>
+          <div class="kpi-sub">Funds saved from lapsing</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Before vs After Reallocation</span>
+            <span class="card-subtitle">Utilization rate by department</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:300px;">
+              <canvas id="chart-opt-compare"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Efficiency Radar</span>
+            <span class="card-subtitle">All departments before vs after</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-container" style="height:300px;">
+              <canvas id="chart-opt-radar"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Transfer Recommendations</span>
+          <span class="card-subtitle">Surplus → deficit district-department pairs</span>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:10px;" id="transfers-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Department Utilization Comparison</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px;">
+            <span>Department</span>
+            <span style="color:var(--color-danger);">Before</span>
+            <span></span>
+            <span style="color:var(--color-success);">After</span>
+            <span>Change</span>
+          </div>
+          <div id="comparison-table"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 6 — REPORTS & INSIGHTS
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-reports">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Reports &amp; Insights</h2>
+          <p>Year-over-year performance summaries, department rankings, and actionable governance insights.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Year-over-Year Budget Performance</span>
+          <span class="card-subtitle">Allocation, Spending, and Utilization Rate (FY 2022–2024)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-container" style="height:300px;">
+            <canvas id="chart-report-yoy"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Department Utilization Trend (2022–2024)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-container" style="height:260px;">
+            <canvas id="chart-report-dept-yr"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Annual Summary Report</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fiscal Year</th>
+                  <th>Total Allocated</th>
+                  <th>Total Spent</th>
+                  <th>Unspent Balance</th>
+                  <th>Utilization Rate</th>
+                  <th>Status</th>
+                  <th>Anomalies</th>
+                </tr>
+              </thead>
+              <tbody id="report-summary-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Department Performance (All Years)</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Total Allocated</th>
+                  <th>Total Spent</th>
+                  <th>Avg Utilization</th>
+                  <th>Anomalies</th>
+                  <th>Assessment</th>
+                </tr>
+              </thead>
+              <tbody id="report-dept-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights Panel -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Key Governance Insights</span>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+
+            <div style="padding:16px;background:var(--color-danger-bg);border:1px solid var(--color-danger-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-danger);margin-bottom:6px;">Chronic Underutilization</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">Hill States and Northeast India consistently show utilization below 60%, indicating systemic capacity constraints or absorption bottlenecks. Immediate administrative intervention and capacity-building needed.</div>
+            </div>
+
+            <div style="padding:16px;background:var(--color-warning-bg);border:1px solid var(--color-warning-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-warning);margin-bottom:6px;">March-End Spending Surge</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">Multiple Union Budget ministries show accelerated Q4 (Jan–Mar) spending to avoid fund lapse — a classic indicator of poor fund planning. Quarterly utilization targets should be mandated by the Finance Ministry.</div>
+            </div>
+
+            <div style="padding:16px;background:var(--accent-subtle);border:1px solid var(--accent-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent);margin-bottom:6px;">Reallocation Opportunity</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">The optimizer identifies significant reallocation potential from low-efficiency regions to high-demand sectors such as Road Transport &amp; Highways, potentially preventing thousands of crores from lapsing each fiscal year.</div>
+            </div>
+
+            <div style="padding:16px;background:var(--color-success-bg);border:1px solid var(--color-success-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-success);margin-bottom:6px;">Top Performing Regions</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">Coastal Regions and South India consistently achieve 90%+ utilization rates, serving as best-practice models for absorption capacity programs across under-performing states.</div>
+            </div>
+
+            <div style="padding:16px;background:var(--color-neutral-bg);border:1px solid var(--color-neutral-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-neutral);margin-bottom:6px;">Leakage Risk Patterns</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">Anomaly detection flags spending in Rural Development (Central India) at 1.9× expected levels — a significant deviation that warrants a CAG audit and detailed fund-flow process review.</div>
+            </div>
+
+            <div style="padding:16px;background:var(--color-warning-bg);border:1px solid var(--color-warning-border);border-radius:var(--r-md);">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-warning);margin-bottom:6px;">Disbursement Delays</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;">Agriculture &amp; Farmers (Northeast India) and Agriculture &amp; Farmers (Deccan Plateau) show recurring early-quarter disbursement delays, suggesting approval process bottlenecks requiring digital workflow improvements.</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         SECTION 7 — DATA INGESTION
+    ══════════════════════════════════════════════════ -->
+    <section class="page-section" id="sec-ingestion">
+
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2>Data Ingestion</h2>
+          <p>Upload new financial datasets to securely ingest data and dynamically update budget analytics.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <span class="card-title">Upload Financial Dataset</span>
+          <span class="card-subtitle">Supported formats: CSV, XLSX (Max 5MB)</span>
+        </div>
+        <div class="card-body">
+          <div id="ingestion-upload-area" class="upload-drop-area" style="border: 2px dashed var(--border); border-radius: 8px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: var(--bg-alt);">
+            <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 12px;">📁</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Drag and drop file here</div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">Or click to browse from your computer</p>
+            <input type="file" id="ingestion-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="display: none;">
+            <button class="btn btn-primary" style="padding: 8px 16px; font-weight: 600; border-radius: 4px; background: var(--accent); color: white; border: none; cursor: pointer;">Upload File</button>
+          </div>
+          
+          <div id="ingestion-status-msg" style="margin-top: 16px; padding: 12px 16px; border-radius: 6px; font-size: 0.9rem; display: none;"></div>
+        </div>
+      </div>
+
+      <div id="ingestion-stats-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px; margin-bottom: 20px;">
+        <!-- KPI cards inject here on successful upload -->
+      </div>
+
+      <div class="card" id="ingestion-preview-section" style="display: none;">
+        <div class="card-header">
+          <span class="card-title">Data Preview</span>
+          <span class="card-subtitle">Showing first 5 rows of uploaded dataset</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="data-table-wrap" style="overflow-x: auto; padding-bottom: 8px;">
+            <table class="data-table" style="min-width: max-content; white-space: nowrap;">
+              <thead id="ingestion-preview-head">
+                <!-- Headers dynamically injected -->
+              </thead>
+              <tbody id="ingestion-preview-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="ingestion-analysis-section" style="display: none; margin-top: 24px;">
+        <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="section-header-left">
+            <h2>Auto-Generated Analysis</h2>
+            <p>Visualizations dynamically generated based on the detected layout of your uploaded dataset.</p>
+          </div>
+          <div>
+            <button id="btn-download-pdf" class="btn btn-primary" style="background:var(--color-info); border:none; padding:10px 16px; border-radius:var(--r-md); color:white; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;">
+              <span>📄</span> Download Executive Report (.pdf)
+            </button>
+          </div>
+        </div>
+        <div id="ingestion-analysis-charts" style="display: flex; flex-direction: column; gap: 20px;" class="mt-12 mb-12">
+            <!-- Dynamic canvases injected here -->
+        </div>
+        
+        <div class="card" id="ingestion-ai-container" style="display:none; margin-top: 24px; border-color: var(--accent-border);">
+          <div class="card-header" style="background: var(--accent-subtle);">
+            <span class="card-title" style="color: var(--accent);">
+              <span style="font-size: 1.1rem; margin-right: 6px;">✨</span> AI Intelligence & Reallocation Synthesis
+            </span>
+          </div>
+          <div class="card-body">
+            <div id="ingestion-ai-insights" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;">
+              <!-- Dynamic AI text blocks injected here -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div><!-- /main-content -->
+</div><!-- /app-shell -->
+
+<!-- Scripts -->
+<script src="js/data.js?v=8"></script>
+<script src="js/ingestion.js?v=8"></script>
+<script src="js/anomaly.js?v=8"></script>
+<script src="js/prediction.js?v=8"></script>
+<script src="js/optimizer.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
+<script src="js/chatbot.js?v=9"></script>
+
+<script>
+// ── Theme Toggle ─────────────────────────────────────────────
+(function() {
+  const html    = document.documentElement;
+  const btn     = document.getElementById('theme-toggle');
+  const icon    = document.getElementById('theme-icon');
+  const label   = document.getElementById('theme-label');
+  const stored  = localStorage.getItem('bfiq-theme') || 'light';
+
+  function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    if (t === 'dark') {
+      icon.textContent  = '○';
+      label.textContent = 'Light';
+    } else {
+      icon.textContent  = '☾';
+      label.textContent = 'Dark';
+    }
+  }
+
+  applyTheme(stored);
+  btn.addEventListener('click', () => {
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem('bfiq-theme', next);
+    // Re-render active section so charts pick up new colors
+    if (window.navigate) window.navigate(window.State ? window.State.activeSection : 'overview');
+  });
+})();
+
+// ── Authentication / Logout ──────────────────────────────────
+document.getElementById('btn-logout').addEventListener('click', () => {
+  sessionStorage.removeItem('bfiq_auth');
+  sessionStorage.removeItem('bfiq_user');
+  window.location.href = 'login.html'; // Redirect to login page
+});
+</script>
+
+</body>
+</html>
