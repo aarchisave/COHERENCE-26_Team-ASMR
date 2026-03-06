@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAnomalies } from '../services/api';
-import { AlertCircle, FileWarning, TrendingUp } from 'lucide-react';
+import { AlertCircle, FileWarning, TrendingUp, Flame } from 'lucide-react';
 
 const Anomalies = () => {
     const [anomalies, setAnomalies] = useState([]);
@@ -34,6 +34,7 @@ const Anomalies = () => {
             case 'Underutilization': return <FileWarning className="text-yellow-500" />;
             case 'Stalled Liquidity': return <TrendingUp className="text-orange-500" />;
             case 'Spending Spike': return <TrendingUp className="text-orange-500" />;
+            case 'High Utilization': return <Flame className="text-purple-500" />;
             default: return <AlertCircle className="text-slate-500" />;
         }
     };
@@ -44,7 +45,19 @@ const Anomalies = () => {
             case 'Underutilization': return 'bg-yellow-50 border-yellow-200';
             case 'Stalled Liquidity': return 'bg-orange-50 border-orange-200';
             case 'Spending Spike': return 'bg-orange-50 border-orange-200';
+            case 'High Utilization': return 'bg-purple-50 border-purple-200';
             default: return 'bg-slate-50 border-slate-200';
+        }
+    };
+
+    const getAnomalyBadgeStyle = (type) => {
+        switch (type) {
+            case 'Overspending': return 'bg-red-100 text-red-700';
+            case 'Underutilization': return 'bg-yellow-100 text-yellow-700';
+            case 'Stalled Liquidity': return 'bg-orange-100 text-orange-700';
+            case 'Spending Spike': return 'bg-orange-100 text-orange-700';
+            case 'High Utilization': return 'bg-purple-100 text-purple-700';
+            default: return 'bg-slate-100 text-slate-700';
         }
     };
 
@@ -61,15 +74,31 @@ const Anomalies = () => {
                 </div>
             </div>
 
+            {/* High Utilization Demo Banner */}
+            <div className="rounded-xl border-2 border-purple-300 bg-purple-50 p-5 shadow-sm flex items-start gap-4">
+                <div className="p-2 bg-white rounded-lg shadow-sm shrink-0">
+                    <Flame className="text-purple-500" size={22} />
+                </div>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">High Utilization</span>
+                        <span className="text-xs text-purple-400 font-medium">Demo Alert</span>
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-lg">Extremely High Budget Utilization Detected</h3>
+                    <p className="text-sm text-slate-500 mb-2">Health Dept · Nashik, Maharashtra</p>
+                    <p className="text-sm text-purple-800 font-medium">94.72% of allocated funds consumed this fiscal period. Immediate replenishment review advised before budget exhaustion.</p>
+                </div>
+            </div>
+
             {/* Alert Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {anomalies.slice(0, 3).map((anomaly, idx) => (
+                {anomalies.slice(0, 6).map((anomaly, idx) => (
                     <div key={idx} className={`rounded-xl border p-5 ${getAnomalyStyle(anomaly.alertType)} shadow-sm transition-all hover:shadow-md`}>
                         <div className="flex items-start justify-between mb-4">
                             <div className="p-2 bg-white rounded-lg shadow-sm">
                                 {getAnomalyIcon(anomaly.alertType)}
                             </div>
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-white/50 px-2 py-1 rounded">
+                            <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${getAnomalyBadgeStyle(anomaly.alertType)}`}>
                                 {anomaly.alertType}
                             </span>
                         </div>
@@ -103,7 +132,7 @@ const Anomalies = () => {
                                         <p className="text-xs text-slate-400">{anomaly.state}, {anomaly.district}</p>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-white text-slate-700">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAnomalyBadgeStyle(anomaly.alertType)}`}>
                                             {anomaly.alertType}
                                         </span>
                                     </td>

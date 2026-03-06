@@ -17,7 +17,11 @@ const generateBudgetData = (monthCount = 1) => {
         const releasedBudget = Math.floor(allocatedBudget * releasePercentage);
 
         // Spent budget: between 10% and 120% of released (to simulate overspending anomalies)
-        const spentPercentage = Math.random() * (1.2 - 0.1) + 0.1;
+        // 10% chance of generating extremely high utilization for demo purposes.
+        let spentPercentage = Math.random() * (1.2 - 0.1) + 0.1;
+        if (Math.random() < 0.1) {
+            spentPercentage = Math.random() * (3.5 - 1.5) + 1.5; // 150% to 350%
+        }
         const spentBudget = Math.floor(releasedBudget * spentPercentage);
 
         data.push({
