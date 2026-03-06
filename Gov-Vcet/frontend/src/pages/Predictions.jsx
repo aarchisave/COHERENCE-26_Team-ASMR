@@ -32,7 +32,7 @@ const Predictions = () => {
     // Calculate Risk Distribution
     const riskCounts = predictions.reduce(
         (acc, curr) => {
-            acc[curr.risk_category] = (acc[curr.risk_category] || 0) + 1;
+            acc[curr.riskCategory] = (acc[curr.riskCategory] || 0) + 1;
             return acc;
         },
         { 'High Risk': 0, 'Medium Risk': 0, 'Low Risk': 0 }
@@ -101,10 +101,10 @@ const Predictions = () => {
                                     let badgeClass = 'bg-risk-low text-risk-low border-risk-low';
                                     let Icon = ShieldCheck;
 
-                                    if (pred.risk_category === 'High Risk') {
+                                    if (pred.riskCategory === 'High Risk') {
                                         badgeClass = 'bg-risk-high text-risk-high border-risk-high';
                                         Icon = ShieldAlert;
-                                    } else if (pred.risk_category === 'Medium Risk') {
+                                    } else if (pred.riskCategory === 'Medium Risk') {
                                         badgeClass = 'bg-risk-medium text-risk-medium border-risk-medium';
                                         Icon = Shield;
                                     }
@@ -118,22 +118,22 @@ const Predictions = () => {
                                                 <div className="flex items-center space-x-2">
                                                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden w-24">
                                                         <div
-                                                            className={`h-full ${pred.utilization_percentage < 30 ? 'bg-red-500' : pred.utilization_percentage < 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
-                                                            style={{ width: `${Math.min(pred.utilization_percentage, 100)}%` }}
+                                                            className={`h-full ${pred.utilizationPercentage < 30 ? 'bg-red-500' : pred.utilizationPercentage < 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                                            style={{ width: `${Math.min(pred.utilizationPercentage, 100)}%` }}
                                                         ></div>
                                                     </div>
-                                                    <span className="text-xs font-semibold text-slate-600">{pred.utilization_percentage}%</span>
+                                                    <span className="text-xs font-semibold text-slate-600">{pred.utilizationPercentage}%</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${badgeClass}`}>
                                                     <Icon size={12} className="mr-1.5" />
-                                                    {pred.risk_category}
+                                                    {pred.riskCategory}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className="font-semibold text-slate-700">
-                                                    {formatCurrency(pred.projected_unused_funds)}
+                                                    {formatCurrency(pred.projectedUnusedFunds)}
                                                 </span>
                                             </td>
                                         </tr>

@@ -12,5 +12,7 @@ export const fetchUtilization = () => api.get('/api/analytics/utilization');
 export const fetchAnomalies = () => api.get('/api/analytics/anomalies');
 export const fetchPrediction = () => api.get('/api/prediction/fund-lapse');
 export const fetchReallocation = () => api.get('/api/recommendation/reallocate');
+export const triggerSimulateMonth = () => api.post('/api/budget/simulate-month');
+export const updateBudget = (payload) => api.put('/api/budget/update', payload);
 
 export default api;

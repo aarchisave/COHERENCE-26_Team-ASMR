@@ -30,18 +30,20 @@ const Anomalies = () => {
 
     const getAnomalyIcon = (type) => {
         switch (type) {
-            case 'OVERSPENDING': return <AlertCircle className="text-red-500" />;
-            case 'LOW_UTILIZATION': return <FileWarning className="text-yellow-500" />;
-            case 'SUDDEN_SPIKE': return <TrendingUp className="text-orange-500" />;
+            case 'Overspending': return <AlertCircle className="text-red-500" />;
+            case 'Underutilization': return <FileWarning className="text-yellow-500" />;
+            case 'Stalled Liquidity': return <TrendingUp className="text-orange-500" />;
+            case 'Spending Spike': return <TrendingUp className="text-orange-500" />;
             default: return <AlertCircle className="text-slate-500" />;
         }
     };
 
     const getAnomalyStyle = (type) => {
         switch (type) {
-            case 'OVERSPENDING': return 'bg-red-50 border-red-200';
-            case 'LOW_UTILIZATION': return 'bg-yellow-50 border-yellow-200';
-            case 'SUDDEN_SPIKE': return 'bg-orange-50 border-orange-200';
+            case 'Overspending': return 'bg-red-50 border-red-200';
+            case 'Underutilization': return 'bg-yellow-50 border-yellow-200';
+            case 'Stalled Liquidity': return 'bg-orange-50 border-orange-200';
+            case 'Spending Spike': return 'bg-orange-50 border-orange-200';
             default: return 'bg-slate-50 border-slate-200';
         }
     };
@@ -62,13 +64,13 @@ const Anomalies = () => {
             {/* Alert Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {anomalies.slice(0, 3).map((anomaly, idx) => (
-                    <div key={idx} className={`rounded-xl border p-5 ${getAnomalyStyle(anomaly.anomaly_type)} shadow-sm transition-all hover:shadow-md`}>
+                    <div key={idx} className={`rounded-xl border p-5 ${getAnomalyStyle(anomaly.alertType)} shadow-sm transition-all hover:shadow-md`}>
                         <div className="flex items-start justify-between mb-4">
                             <div className="p-2 bg-white rounded-lg shadow-sm">
-                                {getAnomalyIcon(anomaly.anomaly_type)}
+                                {getAnomalyIcon(anomaly.alertType)}
                             </div>
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 bg-white/50 px-2 py-1 rounded">
-                                {anomaly.anomaly_type.replace('_', ' ')}
+                                {anomaly.alertType}
                             </span>
                         </div>
                         <h3 className="font-bold text-slate-800 text-lg mb-1">{anomaly.department}</h3>
@@ -102,7 +104,7 @@ const Anomalies = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-white text-slate-700">
-                                            {anomaly.anomaly_type.replace('_', ' ')}
+                                            {anomaly.alertType}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600 max-w-md truncate" title={anomaly.message}>

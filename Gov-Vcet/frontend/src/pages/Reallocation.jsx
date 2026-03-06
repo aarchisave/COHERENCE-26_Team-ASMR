@@ -52,13 +52,13 @@ const Reallocation = () => {
                         <div className="flex items-center justify-between mb-8 relative z-10">
                             <div className="flex-1 pr-4">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Source (Donor)</span>
-                                <p className="font-semibold text-lg text-slate-800">{rec.from_department.split(' - ')[0]}</p>
-                                <p className="text-sm text-slate-500">{rec.from_department.split(' - ')[1]}</p>
+                                <p className="font-semibold text-lg text-slate-800">{rec.fromDepartment.split(' - ')[0]}</p>
+                                <p className="text-sm text-slate-500">{rec.fromDepartment.split(' - ')[1]}</p>
                             </div>
 
                             <div className="flex flex-col items-center px-4">
                                 <div className="bg-emerald-100 text-emerald-700 font-bold px-4 py-1.5 rounded-full mb-2">
-                                    {rec.recommended_transfer_formatted}
+                                    {rec.recommendedTransferFormatted}
                                 </div>
                                 <div className="h-0.5 w-16 bg-slate-200 relative flex items-center justify-center">
                                     <ArrowRight size={16} className="text-slate-400 absolute bg-white px-0.5" />
@@ -67,8 +67,8 @@ const Reallocation = () => {
 
                             <div className="flex-1 pl-4 text-right">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Destination (Receiver)</span>
-                                <p className="font-semibold text-lg text-slate-800">{rec.to_department.split(' - ')[0]}</p>
-                                <p className="text-sm text-slate-500">{rec.to_department.split(' - ')[1]}</p>
+                                <p className="font-semibold text-lg text-slate-800">{rec.toDepartment.split(' - ')[0]}</p>
+                                <p className="text-sm text-slate-500">{rec.toDepartment.split(' - ')[1]}</p>
                             </div>
                         </div>
 

@@ -11,6 +11,7 @@ const Navbar = () => {
             case '/anomalies': return 'Anomaly Detection';
             case '/predictions': return 'Fund Lapse Prediction';
             case '/reallocation': return 'Reallocation Suggestions';
+            case '/admin': return 'Admin Capabilities';
             default: return 'Overview';
         }
     };

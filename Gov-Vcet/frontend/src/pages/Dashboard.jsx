@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { fetchBudget, fetchUtilization } from '../services/api';
+import { fetchBudget, fetchUtilization, triggerSimulateMonth } from '../services/api';
 import MetricCard from '../components/MetricCard';
-import { Wallet, CreditCard, PiggyBank, PieChart as PieChartIcon } from 'lucide-react';
+import { Wallet, CreditCard, PiggyBank, PieChart as PieChartIcon, RefreshCw } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell
@@ -12,24 +12,38 @@ const Dashboard = () => {
     const [utilizationData, setUtilizationData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [budgetRes, utilRes] = await Promise.all([
-                    fetchBudget(),
-                    fetchUtilization()
-                ]);
-                setBudgetData(budgetRes.data.data);
-                setUtilizationData(utilRes.data.data.analysis_overview);
-            } catch (error) {
-                console.error("Error fetching dashboard data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const [isSimulating, setIsSimulating] = useState(false);
 
+    const loadData = async () => {
+        try {
+            const [budgetRes, utilRes] = await Promise.all([
+                fetchBudget(),
+                fetchUtilization()
+            ]);
+            setBudgetData(budgetRes.data.data);
+            setUtilizationData(utilRes.data.data.analysis_overview || utilRes.data.data.analysisOverview || utilRes.data.data);
+        } catch (error) {
+            console.error("Error fetching dashboard data:", error);
+        } finally {
+            setIsLoading(false);
+            setIsSimulating(false);
+        }
+    };
+
+    useEffect(() => {
         loadData();
     }, []);
+
+    const handleSimulateMonth = async () => {
+        setIsSimulating(true);
+        try {
+            await triggerSimulateMonth();
+            await loadData(); // Reload stats with the latest appended data points
+        } catch (err) {
+            console.error("Simulation failed:", err);
+            setIsSimulating(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -40,8 +54,8 @@ const Dashboard = () => {
     }
 
     // Calculate Aggregates
-    const totalAllocated = budgetData.reduce((acc, curr) => acc + curr.allocated_budget, 0);
-    const totalSpent = budgetData.reduce((acc, curr) => acc + curr.spent_budget, 0);
+    const totalAllocated = budgetData.reduce((acc, curr) => acc + curr.allocatedBudget, 0);
+    const totalSpent = budgetData.reduce((acc, curr) => acc + curr.spentBudget, 0);
     const totalRemaining = totalAllocated - totalSpent;
     const overallUtilization = totalAllocated > 0 ? ((totalSpent / totalAllocated) * 100).toFixed(1) : 0;
 
@@ -51,23 +65,23 @@ const Dashboard = () => {
     // Prepare Chart Data (Allocation vs Spending)
     const chartData = budgetData.map(d => ({
         name: `${d.department} (${d.district})`,
-        Allocated: d.allocated_budget,
-        Spent: d.spent_budget
-    }));
+        Allocated: d.allocatedBudget,
+        Spent: d.spentBudget
+    })).slice(-15); // Show latest 15 to avoid clutter over multiple months
 
     // Prepare Pie Chart Data (Dept Utilization)
     const pieColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
     const pData = utilizationData.map(d => ({
         name: `${d.department} - ${d.district}`,
-        value: d.utilization_percentage
-    }));
+        value: d.utilizationPercentage
+    })).slice(-15);
 
     // Prepare District Spending Data
     const districtSpendingMap = budgetData.reduce((acc, curr) => {
         if (!acc[curr.district]) {
             acc[curr.district] = 0;
         }
-        acc[curr.district] += curr.spent_budget;
+        acc[curr.district] += curr.spentBudget;
         return acc;
     }, {});
 
@@ -97,6 +111,22 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            {/* Header / Simulation Row */}
+            <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-800">Operational Overview</h2>
+                    <p className="text-sm text-slate-500">Currently Tracking: {budgetData.length > 0 ? budgetData[budgetData.length - 1].month : 'Dynamic Month'}</p>
+                </div>
+                <button
+                    onClick={handleSimulateMonth}
+                    disabled={isSimulating}
+                    className="flex items-center px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all font-medium disabled:opacity-50"
+                >
+                    <RefreshCw size={16} className={`mr-2 ${isSimulating ? 'animate-spin' : ''}`} />
+                    {isSimulating ? 'Generating Timeline...' : 'Simulate New Month'}
+                </button>
+            </div>
 
             {/* Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

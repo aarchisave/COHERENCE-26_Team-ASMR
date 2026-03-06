@@ -1,49 +1,59 @@
 const { getBudgetData } = require('../models/budgetModel');
-const { calculateUtilization } = require('./utilizationService');
+const { calculateUtilization, getUtilizationAnalysis } = require('./utilizationService');
 
 const detectAnomalies = () => {
-    const data = getBudgetData();
+    const analysis = getUtilizationAnalysis();
     const anomalies = [];
 
-    data.forEach(record => {
-        const utilization = calculateUtilization(record.spent_budget, record.allocated_budget);
-
-        // Rule 1: Spending greater than allocated budget
-        if (record.spent_budget > record.allocated_budget) {
+    // Rules implementation for dynamic simulation criteria
+    analysis.forEach(record => {
+        // Underutilization (< 30%)
+        if (record.utilizationPercentage < 30) {
             anomalies.push({
-                ...record,
-                anomaly_type: 'OVERSPENDING',
-                message: `Spent budget (₹${record.spent_budget}) exceeds allocated budget (₹${record.allocated_budget}).`
+                department: record.department,
+                district: record.district,
+                alertType: 'Underutilization',
+                risk: 'High',
+                message: `Extremely low budget utilization detected: ${record.utilizationPercentage.toFixed(2)}%.`
             });
         }
 
-        // Rule 2: Extremely low utilization (<30%)
-        if (utilization < 30) {
+        // Released funds high but spending is significantly low (Release Efficiency > 80% but Utilization < 30%)
+        if (record.releaseEfficiency > 80 && record.utilizationPercentage < 30) {
             anomalies.push({
-                ...record,
-                anomaly_type: 'LOW_UTILIZATION',
-                utilization_percentage: parseFloat(utilization.toFixed(2)),
-                message: `Extremely low budget utilization detected: ${utilization.toFixed(2)}%.`
+                department: record.department,
+                district: record.district,
+                alertType: 'Stalled Liquidity',
+                risk: 'Medium',
+                message: `Funds released (${record.releaseEfficiency}%) but spending reflects stalled liquidity (${record.utilizationPercentage}%).`
             });
         }
 
-        // Rule 3: Sudden spikes in spending (Mocked for single-year data, but we can compare to average)
-        // For a real implementation, we would compare current month vs previous month spending.
-        // For this simulation, we will calculate average spending per department and flag deviations.
+        // Catch-all arbitrary check logic for overspending (utilization > 100%)
+        if (record.utilizationPercentage > 100) {
+            anomalies.push({
+                department: record.department,
+                district: record.district,
+                alertType: 'Overspending',
+                risk: 'High',
+                message: `Department exceeded allocated budget margins resulting in anomalous deficit.`
+            });
+        }
     });
 
-    // Calculate average utilization to find relative spikes
-    if (data.length > 0) {
-        const avgUtilization = data.reduce((acc, curr) => acc + calculateUtilization(curr.spent_budget, curr.allocated_budget), 0) / data.length;
-        data.forEach(record => {
-            const util = calculateUtilization(record.spent_budget, record.allocated_budget);
-            // If a department is spending way more than the average rate (> 50% more than avg) and hasn't overspent yet
-            if (util > avgUtilization + 50 && record.spent_budget <= record.allocated_budget) {
+    // Calculate generic average utilization (Spike Check)
+    if (analysis.length > 0) {
+        const avgUtilization = analysis.reduce((acc, curr) => acc + curr.utilizationPercentage, 0) / analysis.length;
+
+        analysis.forEach(record => {
+            // Spending spike > 200% compared to average
+            if (record.utilizationPercentage > (avgUtilization * 2)) {
                 anomalies.push({
-                    ...record,
-                    anomaly_type: 'SUDDEN_SPIKE',
-                    utilization_percentage: parseFloat(util.toFixed(2)),
-                    message: `Utilization rate (${util.toFixed(2)}%) is significantly higher than average (${avgUtilization.toFixed(2)}%).`
+                    department: record.department,
+                    district: record.district,
+                    alertType: 'Spending Spike',
+                    risk: 'High',
+                    message: `Utilization rate (${record.utilizationPercentage.toFixed(2)}%) is spiking at 200% over the regional average (${avgUtilization.toFixed(2)}%).`
                 });
             }
         });
