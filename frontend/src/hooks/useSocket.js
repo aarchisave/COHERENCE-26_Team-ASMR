@@ -21,7 +21,8 @@ export default function useSocket(onUpdate, onTreasuryUpdate, debounceMs = 800) 
 
   useEffect(() => {
     if (!sharedSocket) {
-      sharedSocket = io('http://localhost:5000', {
+      const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      sharedSocket = io(socketUrl, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
         reconnectionDelay: 2000,
