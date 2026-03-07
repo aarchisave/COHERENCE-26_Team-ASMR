@@ -36,3 +36,6 @@ Thumbs.db
 
 # MongoDB local data
 data/db/
+
+# Datasets
+MRF_4B_Union_Budget.csv

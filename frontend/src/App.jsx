@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LiveProvider } from './context/LiveContext';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import ChatbotWidget from './components/ChatbotWidget';
@@ -16,7 +17,7 @@ import './styles/main.css';
 
 function ProtectedLayout() {
   const { isAuth } = useAuth();
-  const [year, setYear] = useState(2024);
+  const [year, setYear] = useState('2025');
   const [theme, setTheme] = useState(() => localStorage.getItem('bfiq-theme') || 'light');
 
   useEffect(() => {
@@ -27,24 +28,26 @@ function ProtectedLayout() {
   if (!isAuth) return <Navigate to="/login" replace />;
 
   return (
-    <div className="app-shell">
-      <Sidebar />
-      <div className="main-content">
-        <Topbar year={year} onYearChange={setYear} theme={theme} onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
-        <Routes>
-          <Route path="/"           element={<Overview year={year} />} />
-          <Route path="/overview"   element={<Overview year={year} />} />
-          <Route path="/flowtracker" element={<FlowTracker year={year} />} />
-          <Route path="/anomaly"    element={<AnomalyDetection year={year} />} />
-          <Route path="/prediction" element={<Prediction year={year} />} />
-          <Route path="/optimizer"  element={<Optimizer year={year} />} />
-          <Route path="/reports"    element={<Reports />} />
-          <Route path="/ingestion"  element={<Ingestion />} />
-          <Route path="*"           element={<Navigate to="/" replace />} />
-        </Routes>
+    <LiveProvider>
+      <div className="app-shell">
+        <Sidebar />
+        <div className="main-content">
+          <Topbar year={year} onYearChange={setYear} theme={theme} onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} />
+          <Routes>
+            <Route path="/"           element={<Overview year={year} />} />
+            <Route path="/overview"   element={<Overview year={year} />} />
+            <Route path="/flowtracker" element={<FlowTracker year={year} />} />
+            <Route path="/anomaly"    element={<AnomalyDetection year={year} />} />
+            <Route path="/prediction" element={<Prediction year={year} />} />
+            <Route path="/optimizer"  element={<Optimizer year={year} />} />
+            <Route path="/reports"    element={<Reports />} />
+            <Route path="/ingestion"  element={<Ingestion />} />
+            <Route path="*"           element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+        <ChatbotWidget year={year} />
       </div>
-      <ChatbotWidget year={year} />
-    </div>
+    </LiveProvider>
   );
 }
 
