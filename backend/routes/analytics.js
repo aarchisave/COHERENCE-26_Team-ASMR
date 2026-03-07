@@ -108,51 +108,49 @@ router.get('/predictions', auth, async (req, res) => {
   try {
     const totals = await BudgetRecord.find({ isTotal: true }).lean();
 
-    const forecasts = totals.map(r => {
+    const estimates = totals.map(r => {
       const dataPoints = [
-        { x: 0, y: r.actuals2122Total || 0 },
-        { x: 1, y: r.be2223Total || 0 },
-        { x: 2, y: r.re2223Total || 0 },
-        { x: 3, y: r.be2324Total || 0 },
+        { year: 'FY 23-24', val: r.actuals2122Total || 0 },
+        { year: 'FY 24-25', val: r.be2223Total || 0 },
+        { year: 'FY 24-25 (Rev)', val: r.re2223Total || 0 },
+        { year: 'FY 25-26', val: r.be2324Total || 0 },
       ];
-      const allocated = r.be2324Total || 1;
-      const spent     = r.currentSpent || r.actuals2122Total || 0;
-      const utilizationRate = Math.round((spent / allocated) * 100);
 
-      const { slope } = predictionService.linearRegression(dataPoints.map(d => d.x), dataPoints.map(d => d.y));
-      const projected = Math.round(r.be2324Total + slope);
-      const estimatedUtilization = Math.round((spent / allocated) * 100);
+      const allocated = r.be2324Total || 1;
+      const spent     = r.currentSpent || 0;
+      const { slope } = predictionService.linearRegression([0, 1, 2, 3], dataPoints.map(d => d.val));
+      
+      const projectedTotalSpent = Math.round(spent * (12 / 11.2));
+      const estimatedUtilization = Math.round((projectedTotalSpent / allocated) * 100);
+      const projectedNextYear = Math.round(allocated + slope);
 
       let riskLevel = 'Low', riskIcon = '🟢', riskColor = '#16a34a';
-      if (estimatedUtilization < 55) { riskLevel = 'Critical'; riskIcon = '🔴'; riskColor = '#e11d48'; }
-      else if (estimatedUtilization < 70) { riskLevel = 'High'; riskIcon = '🟠'; riskColor = '#d97706'; }
-      else if (estimatedUtilization < 85) { riskLevel = 'Medium'; riskIcon = '🟡'; riskColor = '#f59e0b'; }
+      if (estimatedUtilization < 75) { 
+        riskLevel = 'Critical'; riskIcon = '🔴'; riskColor = '#e11d48'; 
+      } else if (estimatedUtilization < 85) { 
+        riskLevel = 'High'; riskIcon = '🟠'; riskColor = '#d97706'; 
+      } else if (estimatedUtilization < 92) { 
+        riskLevel = 'Medium'; riskIcon = '🟡'; riskColor = '#f59e0b'; 
+      }
 
-      const lapsedAmount = Math.max(0, allocated - spent);
-      const trend = slope > 0 ? 'Improving' : slope < 0 ? 'Declining' : 'Stable';
-      const recommendation = riskLevel === 'Critical' ? 'Immediate fund utilization review needed.' :
-        riskLevel === 'High' ? 'Accelerate spending in next quarter.' :
-        riskLevel === 'Medium' ? 'Monitor utilization pace closely.' : 'On track — maintain current pace.';
+      const lapsedAmount = Math.max(0, allocated - projectedTotalSpent);
+      const trend = slope > 100 ? 'Improving' : slope < -100 ? 'Declining' : 'Stable';
+      const recommendation = riskLevel === 'Critical' ? 'Immediate fund reallocation required to prevent massive lapse.' :
+        riskLevel === 'High' ? 'Accelerate procurement and disbursement for current month.' :
+        riskLevel === 'Medium' ? 'Monitor month-end reconciliation closely.' : 'Maintaining healthy utilization pace.';
 
       return {
         ministry: r.ministry,
-        historical: [
-          { period: 'FY 2023-24', actual: r.actuals2122Total || 0 },
-          { period: 'FY 2024-25',      actual: r.be2223Total || 0 },
-          { period: 'FY 2024-25 (Rev)',      actual: r.re2223Total || 0 },
-          { period: 'FY 2025-26',      actual: r.be2324Total || 0 },
-        ],
-        projectedNextYear: projected,
-        estimatedUtilization, riskLevel, riskIcon, riskColor, lapsedAmount, trend, recommendation,
+        historical: dataPoints.map(d => ({ period: d.year, actual: d.val })),
+        chartData: [...dataPoints.map(d => d.val), projectedNextYear], // 5 points
+        projectedNextYear, estimatedUtilization, riskLevel, riskIcon, riskColor, lapsedAmount, trend, recommendation,
       };
     }).filter(f => f.historical.some(h => h.actual > 0));
 
-    forecasts.sort((a, b) => a.estimatedUtilization - b.estimatedUtilization);
-
+    const forecasts = estimates.sort((a, b) => a.estimatedUtilization - b.estimatedUtilization);
     const totalAtRisk    = forecasts.filter(f => f.riskLevel === 'Critical' || f.riskLevel === 'High').length;
     const totalLapseRisk = forecasts.reduce((s, f) => s + f.lapsedAmount, 0);
-
-    const periods = ['FY 2023-24', 'FY 2024-25', 'FY 2024-25 (Rev)', 'FY 2025-26'];
+    const periods = ['FY 23-24', 'FY 24-25', 'FY 24-25 (Rev)', 'FY 25-26', 'FY 26-27 (Proj)'];
 
     res.json({ forecasts: forecasts.slice(0, 15), totalAtRisk, totalLapseRisk, periods, totalMinistries: forecasts.length });
   } catch (err) {
@@ -167,45 +165,65 @@ router.get('/optimizer', auth, async (req, res) => {
 
     const ministryData = totals.map(r => {
       const allocated = r.be2324Total || 1;
-      const spent     = r.currentSpent || r.actuals2122Total || 0;
+      const spent     = r.currentSpent || 0;
       const util      = Math.round((spent / allocated) * 100);
-      return { ministry: r.ministry, allocated, spent, utilizationRate: util, surplus: allocated - spent };
-    }).filter(r => r.allocated > 0);
+      return { ministry: r.ministry, allocated, spent, utilizationRate: util, balance: allocated - spent };
+    }).filter(r => r.allocated > 100);
 
-    ministryData.sort((a, b) => b.surplus - a.surplus);
+    const avgUtil = ministryData.reduce((s, r) => s + r.utilizationRate, 0) / (ministryData.length || 1);
+    
+    // Wider dynamic thresholds to ensure results
+    let surplus = ministryData.filter(r => r.utilizationRate < (avgUtil - 1.5)).sort((a,b) => b.balance - a.balance);
+    let deficit = ministryData.filter(r => r.utilizationRate > (avgUtil + 1.5)).sort((a,b) => a.balance - b.balance);
 
-    const surplus  = ministryData.filter(r => r.utilizationRate < 70);
-    const deficit  = ministryData.filter(r => r.utilizationRate >= 85);
+    // Fallback if thresholds are too tight: take top/bottom 15%
+    if (surplus.length === 0) surplus = [...ministryData].sort((a,b) => a.utilizationRate - b.utilizationRate).slice(0, Math.ceil(ministryData.length * 0.15));
+    if (deficit.length === 0) deficit = [...ministryData].sort((a,b) => b.utilizationRate - a.utilizationRate).slice(0, Math.ceil(ministryData.length * 0.15));
 
     const transfers = [];
-    for (const s of surplus.slice(0, 5)) {
-      const target = deficit[transfers.length % deficit.length];
-      if (!target) break;
-      const amount = Math.round(s.surplus * 0.2 * 100) / 100;
+    const ministryDeltas = {};
+
+    surplus.slice(0, 5).forEach((s, i) => {
+      const target = deficit[i % deficit.length];
+      if (!target || s.ministry === target.ministry) return;
+
+      const amount = Math.min(s.balance * 0.18, 1200);
+      if (amount < 50) return; // Ignore trivial moves
+
       transfers.push({
         from: s.ministry, fromUtilBefore: s.utilizationRate,
         to: target.ministry, toUtilBefore: target.utilizationRate,
-        amount, impact: amount > 1000 ? 'High' : amount > 100 ? 'Medium' : 'Low',
+        amount: Math.round(amount),
+        impact: amount > 800 ? 'High' : amount > 300 ? 'Medium' : 'Low'
       });
-    }
 
-    const beforeEfficiency = Math.round(ministryData.reduce((s, r) => s + r.utilizationRate, 0) / ministryData.length * 10) / 10;
+      ministryDeltas[s.ministry] = (ministryDeltas[s.ministry] || 0) - amount;
+      ministryDeltas[target.ministry] = (ministryDeltas[target.ministry] || 0) + amount;
+    });
+
+    const beforeEfficiency = Math.round(avgUtil * 10) / 10;
     const totalAmountMoved = transfers.reduce((s, t) => s + t.amount, 0);
 
-    const departments = ministryData.slice(0, 10).map(r => r.ministry);
-    const originalForecasts  = ministryData.slice(0, 10).map(r => ({ ministry: r.ministry, estimatedUtilization: r.utilizationRate }));
-    const optimizedForecasts = ministryData.slice(0, 10).map(r => ({ ministry: r.ministry, estimatedUtilization: Math.min(100, r.utilizationRate + Math.floor(Math.random() * 5)) }));
+    const top10 = ministryData.sort((a,b) => b.allocated - a.allocated).slice(0, 10);
+    const originalForecasts = top10.map(r => ({ ministry: r.ministry, estimatedUtilization: r.utilizationRate }));
+    const optimizedForecasts = top10.map(r => {
+      const delta = ministryDeltas[r.ministry] || 0;
+      const newAlloc = r.allocated + delta;
+      const newUtil = Math.round((r.spent / newAlloc) * 100);
+      return { ministry: r.ministry, estimatedUtilization: newUtil };
+    });
+
     const afterEfficiency = Math.round(optimizedForecasts.reduce((s, r) => s + r.estimatedUtilization, 0) / optimizedForecasts.length * 10) / 10;
+
 
     res.json({
       transfers,
       originalForecasts, optimizedForecasts,
-      departments,
-      beforeEfficiency,
-      afterEfficiency,
+      departments: top10.map(r => r.ministry),
+      beforeEfficiency, afterEfficiency,
       efficiencyGain: Math.round((afterEfficiency - beforeEfficiency) * 10) / 10,
-      totalAmountMoved: Math.round(totalAmountMoved * 100) / 100,
-      totalLapseReduction: Math.round(totalAmountMoved * 0.6 * 100) / 100,
+      totalAmountMoved: Math.round(totalAmountMoved),
+      totalLapseReduction: Math.round(totalAmountMoved * 0.45) // Estimated economic save
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

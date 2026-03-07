@@ -36,7 +36,17 @@ export default function Overview({ year }) {
     if (!lastTreasuryUpdate) return;
     const delta = lastTreasuryUpdate.updates.reduce((s, u) => s + u.amount, 0);
     setLastDelta(delta);
-    setTransactions(prev => [...lastTreasuryUpdate.updates, ...prev].slice(0, 5));
+    
+    setTransactions(prev => {
+      // 1. Combine new updates with existing ones
+      const combined = [...lastTreasuryUpdate.updates, ...prev];
+      // 2. Filter out duplicates by transactionId
+      const unique = combined.filter((tx, idx, self) => 
+        idx === self.findIndex(t => t.transactionId === tx.transactionId)
+      );
+      // 3. Keep only the latest 5
+      return unique.slice(0, 5);
+    });
     
     const t = setTimeout(() => setLastDelta(0), 4000);
     return () => clearTimeout(t);

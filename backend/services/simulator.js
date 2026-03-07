@@ -35,7 +35,7 @@ async function simulatePFMSPush() {
         const amount = rand(50, 250); // ₹ 50 Cr to 250 Cr per transaction (Treasury Batch)
 
         pfmsPackets.push({
-            transactionId: `PFMS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            transactionId: `PFMS-${Date.now()}-${i}-${Math.floor(Math.random() * 100000)}`,
             ministry: record.ministry,
             scheme:   record.scheme,
             amount,

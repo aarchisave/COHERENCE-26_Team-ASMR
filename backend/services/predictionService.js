@@ -106,4 +106,4 @@ function generateAllForecasts(records, year, districts) {
   return { forecasts, heatmap, totalAtRisk: atRisk.length, totalLapseRisk: Math.round(totalLapseRisk * 100) / 100 };
 }
 
-module.exports = { generateAllForecasts, forecastDepartment, DEPARTMENTS, MONTHS };
+module.exports = { generateAllForecasts, forecastDepartment, linearRegression, DEPARTMENTS, MONTHS };

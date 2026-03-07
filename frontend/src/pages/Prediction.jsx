@@ -25,7 +25,7 @@ export default function Prediction({ year }) {
     labels: periods,
     datasets: forecasts.slice(0, 8).map((f, i) => ({
       label: shortName(f.ministry),
-      data: f.historical.map(h => h.actual),
+      data: f.chartData,
       backgroundColor: ['#3b82f6','#0d9488','#7c3aed','#d97706','#e11d48','#06b6d4','#8b5cf6','#f43f5e'][i] + '55',
       borderColor: ['#3b82f6','#0d9488','#7c3aed','#d97706','#e11d48','#06b6d4','#8b5cf6','#f43f5e'][i],
       borderWidth: 1.5, borderRadius: 4,
@@ -54,23 +54,36 @@ export default function Prediction({ year }) {
         </div></div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'14px' }}>
-        {forecasts.slice(0, 12).map(f => {
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:'16px' }}>
+        {forecasts.slice(0, 15).map(f => {
           const badgeClass = { Critical:'badge-critical', High:'badge-high', Medium:'badge-medium', Low:'badge-low' }[f.riskLevel] || 'badge-blue';
           return (
-            <div key={f.ministry} className="card" style={{ borderColor: f.riskColor+'33' }}>
-              <div className="card-header">
-                <div className="card-title" style={{ fontSize:'0.78rem' }}>{f.riskIcon} {shortName(f.ministry)}</div>
-                <span className={`badge ${badgeClass}`}>{f.riskLevel} Risk</span>
-              </div>
-              <div className="card-body">
-                <div style={{ display:'flex', gap:'16px', flexWrap:'wrap', marginBottom:'12px' }}>
-                  <div><div className="text-muted" style={{ fontSize:'0.64rem', marginBottom:'3px' }}>UTILIZATION</div><div className="mono" style={{ fontSize:'1.2rem', fontWeight:800, color:f.riskColor }}>{f.estimatedUtilization}%</div></div>
-                  <div><div className="text-muted" style={{ fontSize:'0.64rem', marginBottom:'3px' }}>UNSPENT</div><div className="mono" style={{ fontSize:'0.9rem', fontWeight:700, color:'var(--color-warning)' }}>{fmtCr(f.lapsedAmount)}</div></div>
-                  <div><div className="text-muted" style={{ fontSize:'0.64rem', marginBottom:'3px' }}>TREND</div><div style={{ fontSize:'0.8rem', fontWeight:600, color: f.trend === 'Improving' ? 'var(--color-success)' : f.trend === 'Declining' ? 'var(--color-danger)' : 'var(--color-warning)' }}>{f.trend === 'Improving' ? '↑' : f.trend === 'Declining' ? '↓' : '→'} {f.trend}</div></div>
+            <div key={f.ministry} className="card" style={{ borderLeft:`4px solid ${f.riskColor}`, padding:'0' }}>
+              <div className="card-header" style={{ padding:'12px 16px', background:'rgba(255,255,255,0.02)' }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:'4px' }}>
+                    <div className="card-title" style={{ fontSize:'0.75rem', fontWeight:700 }}>{shortName(f.ministry)}</div>
+                    <span className={`badge ${badgeClass}`} style={{ width:'fit-content', fontSize:'0.6rem' }}>{f.riskIcon} {f.riskLevel} LAPSE RISK</span>
                 </div>
-                <div style={{ fontSize:'0.72rem', color:'var(--text-secondary)', background:'rgba(255,255,255,0.03)', padding:'8px 10px', borderRadius:'6px', borderLeft:`3px solid ${f.riskColor}` }}>
-                  💡 {f.recommendation}
+              </div>
+              <div className="card-body" style={{ padding:'16px' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'16px' }}>
+                  <div style={{ background:'var(--bg-app)', padding:'10px', borderRadius:'var(--r-md)', border:'1px solid var(--border-color)' }}>
+                    <div className="text-muted" style={{ fontSize:'0.6rem', marginBottom:'4px', fontWeight:700 }}>FORECASTED UTIL.</div>
+                    <div className="mono" style={{ fontSize:'1.1rem', fontWeight:800, color:f.riskColor }}>{f.estimatedUtilization}%</div>
+                  </div>
+                  <div style={{ background:'var(--bg-app)', padding:'10px', borderRadius:'var(--r-md)', border:'1px solid var(--border-color)' }}>
+                    <div className="text-muted" style={{ fontSize:'0.6rem', marginBottom:'4px', fontWeight:700 }}>EST. LAPSE</div>
+                    <div className="mono" style={{ fontSize:'0.9rem', fontWeight:700, color:'var(--color-warning)' }}>{fmtCr(f.lapsedAmount)}</div>
+                  </div>
+                </div>
+                
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px', fontSize:'0.7rem' }}>
+                    <div style={{ color:'var(--text-muted)' }}>Historical Trend: <span style={{ color:f.trend === 'Improving' ? '#10b981' : '#f59e0b', fontWeight:700 }}>{f.trend}</span></div>
+                    <div style={{ color:'var(--text-muted)' }}>Next FY Target: <span style={{ color:'var(--text-primary)', fontWeight:700 }}>{fmtCr(f.projectedNextYear)}</span></div>
+                </div>
+
+                <div style={{ fontSize:'0.7rem', lineHeight:'1.4', color:'var(--text-secondary)', background:'rgba(59,130,246,0.05)', padding:'10px', borderRadius:'var(--r-md)', border:'1px dashed rgba(59,130,246,0.2)' }}>
+                  <span style={{ fontWeight:700, color:'var(--accent)', marginRight:'4px' }}>ADVISORY:</span> {f.recommendation}
                 </div>
               </div>
             </div>

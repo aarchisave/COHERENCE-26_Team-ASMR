@@ -16,6 +16,12 @@ export default function AnomalyDetection({ year }) {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const { updateCount }     = useLive();
+  
+  // Filter state
+  const [search, setSearch]     = useState('');
+  const [minFilter, setMinFilter] = useState('All');
+  const [sevFilter, setSevFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
 
   function fetchData() {
     getAnomalies(year).then(r => { setData(r.data); setLoading(false); }).catch(() => setLoading(false));
@@ -29,10 +35,21 @@ export default function AnomalyDetection({ year }) {
 
   const { anomalies, summary } = data;
 
+  // Apply Filters
+  const filteredAnomalies = anomalies.filter(a => {
+    const matchesSearch = a.scheme.toLowerCase().includes(search.toLowerCase());
+    const matchesMin    = minFilter === 'All' || a.ministry === minFilter;
+    const matchesSev    = sevFilter === 'All' || a.severity.level === sevFilter;
+    const matchesType   = typeFilter === 'All' || a.type === typeFilter;
+    return matchesSearch && matchesMin && matchesSev && matchesType;
+  });
+
+  const ministries = ['All', ...new Set(anomalies.map(a => a.ministry))];
+
   const scatterData = {
     datasets: Object.keys(TYPE_COLORS).map(type => ({
       label: TYPE_LABELS[type],
-      data: anomalies.filter(a => a.type === type).map(a => ({ x: a.allocated, y: a.spent, r: Math.min(12, Math.abs(a.zScore) * 3), label: a.scheme })),
+      data: filteredAnomalies.filter(a => a.type === type).map(a => ({ x: a.allocated, y: a.spent, r: Math.min(12, Math.abs(a.zScore) * 3), label: a.scheme })),
       backgroundColor: TYPE_COLORS[type]+'88',
       borderColor: TYPE_COLORS[type],
       pointRadius: 5,
@@ -49,7 +66,7 @@ export default function AnomalyDetection({ year }) {
       <div className="section-header">
         <div className="section-header-left">
           <h2>Anomaly Detection — Scheme Level</h2>
-          <p>Z-score statistical outlier detection across {anomalies.length} flagged government schemes.</p>
+          <p>Statistical outlier detection across {filteredAnomalies.length} / {anomalies.length} flagged government schemes.</p>
         </div>
       </div>
 
@@ -76,13 +93,58 @@ export default function AnomalyDetection({ year }) {
       </div>
 
       <div className="card">
-        <div className="card-header"><span className="card-title">Anomaly Log</span><span className="card-subtitle">All flagged schemes sorted by Z-score severity</span></div>
+        <div className="card-header" style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <span className="card-title">Anomaly Log</span>
+              <span className="card-subtitle">{filteredAnomalies.length} flagged schemes sorted by Z-score severity</span>
+            </div>
+          </div>
+          
+          {/* Filter Bar Integrated into Log */}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:'12px', alignItems:'flex-end', paddingTop:'12px', borderTop:'1px solid var(--border-color)' }}>
+            <div style={{ flex:'1', minWidth:'200px' }}>
+              <label style={{ fontSize:'0.6rem', fontWeight:800, color:'var(--text-muted)', display:'block', marginBottom:'4px', textTransform:'uppercase' }}>Search Scheme</label>
+              <input 
+                type="text" 
+                placeholder="Type to search..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                style={{ width:'100%', padding:'8px 12px', background:'rgba(255,255,255,0.03)', border:'1px solid var(--border-color)', borderRadius:'var(--r-md)', color:'var(--text-primary)', fontSize:'0.8rem' }} 
+              />
+            </div>
+            <div>
+              <label style={{ fontSize:'0.6rem', fontWeight:800, color:'var(--text-muted)', display:'block', marginBottom:'4px', textTransform:'uppercase' }}>Ministry</label>
+              <select value={minFilter} onChange={e => setMinFilter(e.target.value)} style={{ padding:'8px 12px', background:'rgba(255,255,255,0.03)', border:'1px solid var(--border-color)', borderRadius:'var(--r-md)', color:'var(--text-primary)', fontSize:'0.8rem', width:'160px' }}>
+                {ministries.map(m => <option key={m} value={m}>{shortName(m)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:'0.6rem', fontWeight:800, color:'var(--text-muted)', display:'block', marginBottom:'4px', textTransform:'uppercase' }}>Severity</label>
+              <select value={sevFilter} onChange={e => setSevFilter(e.target.value)} style={{ padding:'8px 12px', background:'rgba(255,255,255,0.03)', border:'1px solid var(--border-color)', borderRadius:'var(--r-md)', color:'var(--text-primary)', fontSize:'0.8rem', width:'120px' }}>
+                <option value="All">All Severity</option>
+                <option value="Critical">🔴 Critical</option>
+                <option value="High">🟠 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🔵 Low</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:'0.6rem', fontWeight:800, color:'var(--text-muted)', display:'block', marginBottom:'4px', textTransform:'uppercase' }}>Type</label>
+              <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ padding:'8px 12px', background:'rgba(255,255,255,0.03)', border:'1px solid var(--border-color)', borderRadius:'var(--r-md)', color:'var(--text-primary)', fontSize:'0.8rem', width:'160px' }}>
+                <option value="All">All Types</option>
+                {Object.keys(TYPE_LABELS).map(t => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+              </select>
+            </div>
+            <button onClick={() => { setSearch(''); setMinFilter('All'); setSevFilter('All'); setTypeFilter('All'); }} style={{ padding:'8px 16px', background:'rgba(255,255,255,0.05)', border:'1px solid var(--border-color)', borderRadius:'var(--r-md)', fontSize:'0.75rem', cursor:'pointer' }}>Reset</button>
+          </div>
+        </div>
         <div className="card-body" style={{ padding:0 }}>
           <div className="data-table-wrap" style={{ maxHeight:'400px', overflowY:'auto' }}>
             <table className="data-table">
               <thead><tr><th>Severity</th><th>Ministry</th><th>Scheme</th><th>Type</th><th>Allocated</th><th>Spent</th><th>Utilization</th><th>Z-Score</th><th>Impact</th></tr></thead>
               <tbody>
-                {anomalies.slice(0, 30).map((a, i) => (
+                {filteredAnomalies.slice(0, 50).map((a, i) => (
                   <tr key={i}>
                     <td><span className={`badge ${getBadgeClass(a.severity.level)}`}>{a.severity.icon} {a.severity.level}</span></td>
                     <td style={{ fontSize:'0.72rem', maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={a.ministry}>{shortName(a.ministry)}</td>

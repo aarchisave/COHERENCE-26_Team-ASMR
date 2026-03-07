@@ -55,27 +55,45 @@ export default function Optimizer({ year }) {
       </div>
 
       <div className="card">
-        <div className="card-header"><span className="card-title">Transfer Recommendations</span><span className="card-subtitle">Surplus → deficit ministry pairs</span></div>
-        <div className="card-body">
-          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-            {transfers.map((t, i) => (
-              <div key={i} className="transfer-card">
-                <span className="transfer-arrow">⇄</span>
-                <div className="transfer-info">
-                  <div className="transfer-route">
-                    <span style={{ color:'var(--color-success)' }}>{shortName(t.from)}</span>
-                    <span style={{ color:'var(--text-muted)', margin:'0 8px' }}>→</span>
-                    <span style={{ color:'var(--accent)' }}>{shortName(t.to)}</span>
-                  </div>
-                  <div className="transfer-meta">{t.fromUtilBefore}% util → {t.toUtilBefore}% util ministry</div>
-                </div>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'4px' }}>
-                  <div className="transfer-amount">{fmtCr(t.amount)}</div>
-                  <span className="badge" style={{ background:`${IMPACT_COLORS[t.impact]}22`, color:IMPACT_COLORS[t.impact], border:`1px solid ${IMPACT_COLORS[t.impact]}44`, fontSize:'0.6rem' }}>{t.impact}</span>
-                </div>
-              </div>
-            ))}
+        <div className="card-header">
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%' }}>
+            <div>
+              <span className="card-title">Transfer Recommendations</span>
+              <span className="card-subtitle">Surplus → deficit ministry pairs</span>
+            </div>
+            {transfers.length > 0 && <span className="badge badge-success">● Optimized Strategy Active</span>}
           </div>
+        </div>
+        <div className="card-body">
+          {transfers.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'40px 0', color:'var(--text-muted)' }}>
+              <div style={{ fontSize:'2rem', marginBottom:'12px' }}>⚖️</div>
+              <p style={{ fontSize:'0.9rem', fontWeight:600 }}>System Balanced</p>
+              <p style={{ fontSize:'0.75rem' }}>No significant reallocation candidates found within current utilization bounds.</p>
+            </div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+              {transfers.map((t, i) => (
+                <div key={i} className="transfer-card">
+                  <span className="transfer-arrow">⇄</span>
+                  <div className="transfer-info">
+                    <div className="transfer-route">
+                      <span style={{ color:'var(--color-success)', fontWeight:700 }}>{shortName(t.from)}</span>
+                      <span style={{ color:'var(--text-muted)', margin:'0 8px' }}>→</span>
+                      <span style={{ color:'var(--accent)', fontWeight:700 }}>{shortName(t.to)}</span>
+                    </div>
+                    <div className="transfer-meta" style={{ fontSize:'0.65rem' }}>
+                      {t.fromUtilBefore}% util (Surplus) ➜ {t.toUtilBefore}% util (Deficit)
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'4px' }}>
+                    <div className="transfer-amount" style={{ color:'var(--color-success)', fontWeight:800 }}>+{fmtCr(t.amount)}</div>
+                    <span className="badge" style={{ background:`${IMPACT_COLORS[t.impact]}22`, color:IMPACT_COLORS[t.impact], border:`1px solid ${IMPACT_COLORS[t.impact]}44`, fontSize:'0.55rem', fontWeight:700 }}>{t.impact.toUpperCase()} IMPACT</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
