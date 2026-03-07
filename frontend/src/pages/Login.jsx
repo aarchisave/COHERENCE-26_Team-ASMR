@@ -41,7 +41,7 @@ export default function Login() {
         <div style={{ textAlign:'center', marginBottom:'30px' }}>
           <div className="brand-wordmark">
             <h1 style={{ fontSize:'1.5rem', color:'var(--text-primary)', marginBottom:'4px' }}>BudgetFlow IQ</h1>
-            <p style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>GovTech Intelligence Platform</p>
+            <p style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>GovTech Intelligence Platform (v1.0.1-fire)</p>
           </div>
         </div>
 
