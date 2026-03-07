@@ -32,7 +32,8 @@ async function processPFMSData(packets, io) {
 
       if (record) {
         const newSpent = Math.round((record.currentSpent + amount) * 100) / 100;
-        const allocated = record.be2324Total || record.be2223Total || 1;
+        const allocatedRaw = record.be2324Total || record.be2223Total || 1;
+        const allocated = Math.max(allocatedRaw, 1); // Floor at 1 Cr for stability
         const newUtil = Math.round((newSpent / allocated) * 10000) / 100;
 
         await BudgetRecord.updateOne(
@@ -44,7 +45,8 @@ async function processPFMSData(packets, io) {
         const ministryTotal = await BudgetRecord.findOne({ ministry, isTotal: true });
         if (ministryTotal) {
           const mNewSpent = Math.round((ministryTotal.currentSpent + amount) * 100) / 100;
-          const mAllocated = ministryTotal.be2324Total || ministryTotal.be2223Total || 1;
+          const mAllocatedRaw = ministryTotal.be2324Total || ministryTotal.be2223Total || 1;
+          const mAllocated = Math.max(mAllocatedRaw, 1);
           const mNewUtil = Math.round((mNewSpent / mAllocated) * 10000) / 100;
 
           await BudgetRecord.updateOne(

@@ -1,16 +1,27 @@
-const jwt = require('jsonwebtoken');
+const admin = require('../services/firebaseAdmin');
 
-module.exports = function authMiddleware(req, res, next) {
-  const authHeader = req.headers['authorization'];
+const authenticate = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
   }
-  const token = authHeader.slice(7);
+
+  const token = authHeader.split(' ')[1];
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload;
+    console.log('🔍 Verifying Firebase token...');
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    console.log('✅ Token verified for:', decodedToken.email);
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      name: decodedToken.name || 'User'
+    };
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (error) {
+    console.error('Error verifying Firebase token:', error);
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 };
+
+module.exports = authenticate;

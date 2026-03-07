@@ -18,6 +18,7 @@ function getFYFields(fy) {
 
 // ── GET /api/analytics/overview ──────────────────────────────
 router.get('/overview', auth, async (req, res) => {
+  console.log('📬 GET /api/analytics/overview called by:', req.user?.email);
   try {
     const fy = req.query.year || '2023';
     const fields = getFYFields(fy);

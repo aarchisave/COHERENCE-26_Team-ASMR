@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+console.log('📍 Overview.jsx file loaded');
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { getOverview } from '../services/api';
@@ -19,7 +20,17 @@ export default function Overview({ year }) {
   const [lastDelta, setLastDelta] = useState(0);
 
   function fetchData() {
-    getOverview(year).then(r => { setData(r.data); setLoading(false); }).catch(() => setLoading(false));
+    console.log('📡 Fetching Overview for year:', year);
+    getOverview(year)
+      .then(r => { 
+        console.log('✅ Overview data received:', r.data ? 'Success' : 'Empty');
+        setData(r.data); 
+        setLoading(false); 
+      })
+      .catch(err => { 
+        console.error('❌ Overview fetch error:', err);
+        setLoading(false); 
+      });
   }
 
   useEffect(() => { setLoading(true); fetchData(); }, [year]);

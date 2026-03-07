@@ -25,6 +25,7 @@ function ProtectedLayout() {
     localStorage.setItem('bfiq-theme', theme);
   }, [theme]);
 
+  console.log('🛡️ ProtectedLayout: isAuth =', isAuth);
   if (!isAuth) return <Navigate to="/login" replace />;
 
   return (

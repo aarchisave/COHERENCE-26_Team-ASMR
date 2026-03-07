@@ -17,18 +17,18 @@ function rand(lo, hi) { return lo + Math.random() * (hi - lo); }
 async function simulatePFMSPush() {
   tickCount++;
   try {
-    // 1. Pick 3-5 random schemes that have an allocation for 2023-24
+    // 1. Pick 3-5 random schemes that have a significant allocation for 2023-24 (> 10 Cr)
     const sampleSize = Math.floor(rand(3, 6));
-    const total = await BudgetRecord.countDocuments({ isTotal: false, be2324Total: { $gt: 0 } });
+    const total = await BudgetRecord.countDocuments({ isTotal: false, be2324Total: { $gt: 10 } });
     if (!total) return;
-
+    
     const pfmsPackets = [];
-
+    
     for (let i = 0; i < sampleSize; i++) {
         const skip = Math.floor(Math.random() * total);
-        const record = await BudgetRecord.findOne({ isTotal: false, be2324Total: { $gt: 0 } }).skip(skip).lean();
+        const record = await BudgetRecord.findOne({ isTotal: false, be2324Total: { $gt: 10 } }).skip(skip).lean();
         if (!record) continue;
-
+        
         // 2. Generate a realistic transaction amount (not as a percentage, but as a "spend event")
         // Typically a single payment for a scheme might be 0.1 to 2 Cr
         const allocated = record.be2324Total;

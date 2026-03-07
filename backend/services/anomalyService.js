@@ -43,7 +43,8 @@ function detectAnomalies(records) {
     const ratio = r.spent / (r.allocated || 1);
     const z = zScore(ratio, m, sd);
     const type = classifyAnomaly(r.allocated, r.spent);
-    if (Math.abs(z) >= 1.3 && type) {
+    // Ignore anomalies on very low allocations (< 1 Cr) as they lead to misleading noise
+    if (r.allocated >= 1 && Math.abs(z) >= 1.3 && type) {
       const utilizationRate = Math.round(ratio * 10000) / 100;
       const financialImpact = Math.abs(r.allocated - r.spent);
       anomalies.push({

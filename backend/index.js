@@ -6,10 +6,10 @@ const mongoose     = require('mongoose');
 const cors         = require('cors');
 const simulator    = require('./services/simulator');
 
-const authRoutes      = require('./routes/auth');
 const budgetRoutes    = require('./routes/budget');
 const analyticsRoutes = require('./routes/analytics');
 const ingestionRoutes = require('./routes/ingestion');
+const aiRoutes        = require('./routes/ai');
 
 const app    = express();
 const server = http.createServer(app);
@@ -21,6 +21,11 @@ const allowedOrigins = [
   'http://localhost:5174', 
   'http://localhost:5175', 
   'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:3000',
+  'https://coherence-26-team-asmr.vercel.app',
   process.env.CORS_ORIGIN
 ].filter(Boolean);
 
@@ -40,7 +45,11 @@ io.on('connection', socket => {
 // Inject io into simulator so it can broadcast
 simulator.setIO(io);
 
-// ── Middleware ───────────────────────────────────────────────
+app.use((req, res, next) => {
+  console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -51,10 +60,10 @@ app.use((err, req, res, next) => {
 });
 
 // ── Routes ───────────────────────────────────────────────────
-app.use('/api/auth',       authRoutes);
 app.use('/api/budget',     budgetRoutes);
 app.use('/api/analytics',  analyticsRoutes);
 app.use('/api/ingestion',  ingestionRoutes);
+app.use('/api/ai',         aiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));

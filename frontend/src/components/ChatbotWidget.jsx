@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { askAI } from '../services/api';
 
 const DEPT_COLORS = ['#3b82f6','#0d9488','#7c3aed','#d97706','#e11d48'];
 
@@ -25,57 +26,31 @@ export default function ChatbotWidget({ yearData, year }) {
     if (msgRef.current) msgRef.current.scrollTop = msgRef.current.scrollHeight;
   }, [messages]);
 
-  function computeReallocation() {
-    if (!yearData?.length) return 'No data available.';
-    const depts = {};
-    yearData.forEach(d => {
-      const key = d.department + ' (' + d.district + ')';
-      if (!depts[key]) depts[key] = { alloc: 0, spent: 0, dept: d.department, dist: d.district };
-      depts[key].alloc += d.allocated;
-      depts[key].spent += d.spent;
-    });
-    const metrics = Object.values(depts).map(x => ({ ...x, rate: x.alloc > 0 ? x.spent / x.alloc : 0, balance: x.alloc - x.spent }));
-    metrics.sort((a, b) => b.rate - a.rate);
-    const topPerformers = metrics.filter(m => m.rate > 0.85);
-    metrics.sort((a, b) => a.rate - b.rate);
-    const slowSpenders = metrics.filter(m => m.rate < 0.6 && m.balance > 100);
-    if (topPerformers.length > 0 && slowSpenders.length > 0) {
-      const source = slowSpenders[0], target = topPerformers[0];
-      const amt = Math.round(source.balance * 0.4);
-      return `💡 **Active Policy Recommendation**\n\nReallocate **₹${amt.toLocaleString()} Cr** from **${source.dept}** (${source.dist}) → **${target.dept}** (${target.dist}).\n\nJustification: Source is at ${(source.rate*100).toFixed(1)}% utilization with high lapse risk. Target operates at ${(target.rate*100).toFixed(1)}%, near maximum capacity.`;
-    }
-    return 'No significant reallocation differentials detected.';
-  }
-
-  function computeLapseRisks() {
-    if (!yearData?.length) return 'No data available.';
-    const depts = {};
-    yearData.forEach(d => {
-      const key = d.department + ' (' + d.district + ')';
-      if (!depts[key]) depts[key] = { alloc: 0, spent: 0, dept: d.department, dist: d.district };
-      depts[key].alloc += d.allocated;
-      depts[key].spent += d.spent;
-    });
-    const metrics = Object.values(depts).map(x => ({ ...x, rate: x.alloc > 0 ? x.spent / x.alloc : 0, balance: x.alloc - x.spent }));
-    metrics.sort((a, b) => a.rate - b.rate);
-    const critical = metrics.filter(m => m.rate < 0.4 && m.balance > 500);
-    if (critical.length > 0) {
-      const risk = critical[0];
-      return `⚠️ **Fund Lapse Prevention Notice**\n\nRisk: **${risk.dept}** (${risk.dist})\n\nThis node holds **₹${risk.balance.toLocaleString()} Cr** of unutilized capital at only ${(risk.rate*100).toFixed(1)}% absorption. Immediate intervention required to prevent year-end lapse.`;
-    }
-    return 'No critical year-end fund lapse scenarios detected.';
-  }
-
   async function handleAction(action, label) {
     setMessages(m => [...m, { type: 'user', content: label }]);
-    await new Promise(r => setTimeout(r, 900));
+    
+    // Add a loading message
+    const loadingIdx = messages.length + 1;
+    setMessages(m => [...m, { type: 'system', content: 'Analyzing budget data...' }]);
 
-    let result = '';
-    if (action === 'reallocate') result = computeReallocation();
-    else if (action === 'lapse') result = computeLapseRisks();
-    else result = '📊 Fetching anomaly analysis from the detection engine…\n\nSee the **Anomaly Detection** section for a full statistical breakdown using Z-score analysis across all departments.';
-
-    setMessages(m => [...m, { type: 'system', content: result }]);
+    try {
+      const res = await askAI({ year, query: label });
+      const result = res.data.response;
+      
+      setMessages(m => {
+        const newMessages = [...m];
+        newMessages[loadingIdx] = { type: 'system', content: result };
+        return newMessages;
+      });
+    } catch (err) {
+      console.error("AI Error:", err);
+      const errorMsg = err.response?.data?.error || "Failed to fetch analysis from the engine.";
+      setMessages(m => {
+        const newMessages = [...m];
+        newMessages[loadingIdx] = { type: 'system', content: `AI Error: ${errorMsg}` };
+        return newMessages;
+      });
+    }
   }
 
   return (
